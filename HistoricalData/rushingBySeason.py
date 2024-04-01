@@ -32,7 +32,8 @@ driver = webdriver.Chrome()
 url = "https://www.pro-football-reference.com/years/"
 baseUrl = "https://www.pro-football-reference.com"
 response = requests.get(url)
-allTeams = ['crd', 'atl', 'bal', 'buf', 'car', 'chi', 'cin', 'cle', 'dal', 'den', 'det', 'gnb', 'hou', 'ind', 'jax', 'kan', 'lac', 'lar', 'lvr', 'mia', 'min', 'nor', 'nwe', 'nyg', 'nyj', 'phi', 'pit', 'sea', 'sfo', 'tam', 'ten', 'was']
+realTeams = ['ARI', 'ATL', 'BAL', 'BUF', 'CAR', 'CHI', 'CIN', 'CLE', 'DAL', 'DEN', 'DET', 'GNB', 'HOU', 'IND', 'JAX', 'KAN', 'LAC', 'LAR', 'LVR', 'MIA', 'MIN', 'NOR', 'NWE', 'NYG', 'NYJ', 'PHI', 'PIT', 'SEA', 'SFO', 'TAM', 'TEN', 'WAS']
+allTeams = ['crd', 'atl', 'rav', 'buf', 'car', 'chi', 'cin', 'cle', 'dal', 'den', 'det', 'gnb', 'htx', 'clt', 'jax', 'kan', 'sdg', 'ram', 'rai', 'mia', 'min', 'nor', 'nwe', 'nyg', 'nyj', 'phi', 'pit', 'sea', 'sfo', 'tam', 'oti', 'was']
 
 soup = BeautifulSoup(response.content, 'html.parser')
 
@@ -52,9 +53,11 @@ for row in seasons.find_all('tr')[2:]:
     for team in allTeams:
         teamUrl = baseUrl + '/teams/' + team + '/' + season + '.htm'
         print(teamUrl)
+        teamIndex = allTeams.index(team)
+        realTeam = realTeams[teamIndex]
 
         time.sleep(3.1)
-
+        driver = webdriver.Chrome()
         driver.get(teamUrl)
         wait = WebDriverWait(driver, 3)
         wait.until(EC.visibility_of_element_located((By.ID, "rushing_and_receiving")))
@@ -62,13 +65,13 @@ for row in seasons.find_all('tr')[2:]:
 
         soup3 = BeautifulSoup(html, 'html.parser')  # Use response3 here
         # Assuming you have already fetched and parsed the webpage into soup3
+
         rushingStats = soup3.find('table', {'id': 'rushing_and_receiving'})
             # Now you can iterate over the rows in rushingStats table
         for row in rushingStats.find_all('tr')[2:]:
             columns = row.find_all('td')
-            print(columns)
             season = season
-            team = team
+            realTeam = realTeam
             playerName = columns[0].text.strip()
             position = columns[2].text.strip()
             gamesStarted = columns[4].text.strip()
@@ -77,9 +80,10 @@ for row in seasons.find_all('tr')[2:]:
             TDs = columns[7].text.strip()
             yardsAttempt = columns[11].text.strip()
             yardsGame = columns[12].text.strip()
-            if(int(attempts) > 0 and position != null):
-                seasonRushData.append((season, team, playerName, position, gamesStarted, attempts, yards, TDs, yardsAttempt, yardsGame))
-                print(season + ' ' + team + ' ' + playerName + ' ' + position + ' ' + gamesStarted + ' ' + attempts + ' ' + yards + ' ' + TDs + ' ' + yardsAttempt + ' ' + yardsGame)
+            if(attempts and position != ''):
+                if(int(attempts) > 0):
+                    seasonRushData.append((season, realTeam, playerName, position, gamesStarted, attempts, yards, TDs, yardsAttempt, yardsGame))
+                    print(season + ' ' + realTeam + ' ' + playerName + ' ' + position + ' ' + gamesStarted + ' ' + attempts + ' ' + yards + ' ' + TDs + ' ' + yardsAttempt + ' ' + yardsGame)
 
         driver.quit()
 
