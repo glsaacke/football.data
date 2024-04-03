@@ -37,14 +37,14 @@ allTeams = ['crd', 'atl', 'rav', 'buf', 'car', 'chi', 'cin', 'cle', 'dal', 'den'
 soup = BeautifulSoup(response.content, 'html.parser')
 
 seasons = soup.find(id="years")
-seasonRushData = []
+passingData = []
 
 for row in seasons.find_all('tr')[2:]:
     season = row.find('th').text.strip()
     if(int(season) > 2009):
         seasonUrl = baseUrl + '/years/' + season
         print(seasonUrl)
-        time.sleep(3.1)
+        # time.sleep(3.1)
         response2 = requests.get(url)
 
         soup2 = BeautifulSoup(response.content, 'html.parser')
@@ -56,36 +56,39 @@ for row in seasons.find_all('tr')[2:]:
             teamIndex = allTeams.index(team)
             realTeam = realTeams[teamIndex]
 
-            time.sleep(3.1)
+            time.sleep(3.2)
 
             driver.get(teamUrl)
             wait = WebDriverWait(driver, 1)
-            wait.until(EC.visibility_of_element_located((By.ID, "rushing_and_receiving")))
+            wait.until(EC.visibility_of_element_located((By.ID, "passing")))
             html = driver.page_source
 
             soup3 = BeautifulSoup(html, 'html.parser')  # Use response3 here
             # Assuming you have already fetched and parsed the webpage into soup3
 
-            rushingStats = soup3.find('table', {'id': 'rushing_and_receiving'})
+            passStats = soup3.find('table', {'id': 'passing'})
                 # Now you can iterate over the rows in rushingStats table
-            for row in rushingStats.find_all('tr')[2:]:
+            for row in passStats.find_all('tr')[1:]:
                 columns = row.find_all('td')
                 season = season
                 realTeam = realTeam
                 playerName = columns[0].text.strip()
                 position = columns[2].text.strip()
                 gamesStarted = columns[4].text.strip()
-                attempts = columns[5].text.strip()
-                yards = columns[6].text.strip()
-                TDs = columns[7].text.strip()
-                firstDowns = columns[8].text.strip()
-                success = columns[9].text.strip()
-                yardsAttempt = columns[11].text.strip()
-                yardsGame = columns[12].text.strip()
-                if(attempts and position != ''):
-                    if(int(attempts) > 0):
-                        seasonRushData.append((season, realTeam, playerName, position, gamesStarted, attempts, yards, TDs, firstDowns, success, yardsAttempt, yardsGame))
-                        print(season + ' ' + realTeam + ' ' + playerName + ' ' + position + ' ' + gamesStarted + ' ' + attempts + ' ' + yards + ' ' + TDs + ' ' + firstDowns + ' ' + success + ' ' + yardsAttempt + ' ' + yardsGame)
+                completions = columns[6].text.strip()
+                passAttempts = columns[15].text.strip()
+                yards = columns[9].text.strip()
+                TDs = columns[10].text.strip()
+                interceptions = columns[12].text.strip()
+                firstDowns = columns[14].text.strip()
+                success = columns[15].text.strip()
+                yardsCompletion = columns[19].text.strip()
+                yardsGame = columns[20].text.strip()
+                qbr = columns[21].text.strip()
+                if(completions and position != ''):
+                    if(int(completions) > 0):
+                        passingData.append((season, realTeam, playerName, position, gamesStarted, completions, passAttempts, yards, TDs, interceptions, firstDowns, success, yardsCompletion, yardsGame, qbr))
+                        print(season + ' ' + realTeam + ' ' + playerName + ' ' + position + ' ' + gamesStarted + ' ' + completions + ' ' + passAttempts + ' ' + yards + ' ' + TDs + ' ' + interceptions + ' ' + firstDowns + ' ' + success + ' ' + yardsCompletion + ' ' + yardsGame + ' ' + qbr)
 
 driver.quit()
 
@@ -98,16 +101,16 @@ def cleanPlayerName(playerName):
 
 
 # csv output
-csv_file_path = "historical_rush_data"
+csv_file_path = "historical_pass_data"
 
 with open(csv_file_path, 'w', newline='', encoding='utf-8') as csvfile:
-    fieldnames = ['Season', 'Team', 'Player', 'Position', 'Games Started', 'Rushing Attempts', 'Rushing Yards', 'Rushing TDs', 'Rushing 1D', 'Success%', 'Rush Yards/Attempt', 'Rush Yards/Game']
+    fieldnames = ['Season', 'Team', 'Player', 'Position', 'Games Started', 'Completions', 'Pass Attempts', 'Passing Yards', 'Passing TDs', 'Interceptions', 'Passing 1D', 'Success%', 'Pass Yards/Comp', 'Pass Yards/Game', 'QBR']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
     writer.writeheader()
 
-    for playerInfo in seasonRushData:
+    for playerInfo in passingData:
         playerInfo = (cleanPlayerName(playerInfo[0]),) + playerInfo[1:]
-        writer.writerow({'Season': playerInfo[0], 'Team': playerInfo[1], 'Player': cleanPlayerName(playerInfo[2]), 'Position': playerInfo[3], 'Games Started': playerInfo[4], 'Rushing Attempts': playerInfo[5], 'Rushing Yards': playerInfo[6], 'Rushing TDs': playerInfo[7], 'Rushing 1D': playerInfo[8], 'Success%': playerInfo[9], 'Rush Yards/Attempt': playerInfo[10], 'Rush Yards/Game': playerInfo[11]})
+        writer.writerow({'Season': playerInfo[0], 'Team': playerInfo[1], 'Player': cleanPlayerName(playerInfo[2]), 'Position': playerInfo[3], 'Games Started': playerInfo[4], 'Completions': playerInfo[5], 'Pass Attempts': playerInfo[6], 'Passing Yards': playerInfo[7], 'Passing TDs': playerInfo[8], 'Interceptions': playerInfo[9], 'Passing 1D': playerInfo[10], 'Success%': playerInfo[11], 'Pass Yards/Comp': playerInfo[12], 'Pass Yards/Game': playerInfo[13], 'QBR': playerInfo[14]})
 
 print("CSV file saved successfully:", csv_file_path)
